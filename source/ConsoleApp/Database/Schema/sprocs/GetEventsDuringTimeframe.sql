@@ -1,6 +1,6 @@
 ﻿/* Example of idempotent Stored Procedure script */
 
-/* Boilerplate SQL to create procedure if it does not exist already */
+/* Boilerplate SQL to create procedure if it does not exist */
 DECLARE @Name VarChar(100)
 DECLARE @Type VarChar(20)
 SET @Name = 'GetEventsInTimeRange'

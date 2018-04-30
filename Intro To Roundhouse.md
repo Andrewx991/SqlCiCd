@@ -1,6 +1,7 @@
 # How To Do SQL Development with Roundhouse
 
-Roundhouse is a tool that automates the execution of SQL scripts via folder/file conventions and does some state tracking for you in order to help simplify database CI/CD.
+[Roundhouse](https://github.com/chucknorris/roundhouse/wiki)
+is a tool that automates the execution of SQL scripts via folder/file conventions and does some state tracking for you in order to help simplify database CI/CD.
 
 ## How it works
 

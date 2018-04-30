@@ -8,8 +8,6 @@ CREATE TABLE [Events]
   [EventId] nvarchar(MAX) NOT NULL,
   [EventJson] nvarchar(MAX) NOT NULL
 )
--- Optimize for time based lookups
-CREATE CLUSTERED INDEX clustered_index_Events ON [Events] ([DateTimeOffset])
 
 -- Store how many events each application sends per day so we can track usage per application over time
 CREATE TABLE [DailyEventPublishingStats]
@@ -20,6 +18,3 @@ CREATE TABLE [DailyEventPublishingStats]
   [MarketShare] decimal(5,2) NOT NULL,
   CHECK ([MarketShare] >= 0 and [MarketShare] <= 100)
 )
--- Optimize for date based lookups
-CREATE CLUSTERED INDEX clustered_index_Daily_Event_Pub_Stats ON [DailyEventPublishingStats] ([Date])
-
