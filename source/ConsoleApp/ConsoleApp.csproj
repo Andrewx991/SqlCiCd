@@ -10,8 +10,4 @@
     <PackageReference Include="System.Data.SqlClient" Version="4.4.3" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Database\Schema\views\" />
-  </ItemGroup>
-
 </Project>
