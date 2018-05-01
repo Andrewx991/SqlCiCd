@@ -16,5 +16,6 @@ CREATE TABLE [DailyEventPublishingStats]
   [Application] nvarchar(MAX) NOT NULL,
   [EventCount] bigint NOT NULL,
   [MarketShare] decimal(5,2) NOT NULL,
+  [WhoopsThisIsntSupposedToBeHere] int NOT NULL,
   CHECK ([MarketShare] >= 0 and [MarketShare] <= 100)
 )
