@@ -1,75 +1,58 @@
 # CI/CD for SQL Databases
 
-This repo is meant to demonstrate a development process that can help simplify CI/CD for SQL Databases.
+This repo is meant to demonstrate a process that can help simplify CI/CD for SQL Databases.
 
+What this process gets you:
+* Allows you to write SQL as plain SQL, as opposed to relying on other syntax some tools might force.
+* Allows you to store SQL as plain SQL files with your repo(s), as opposed to having to store them in a tool.
+* Allows use of database differential tools so long as they can output plain SQL file(s).
+* Encourages a convention that helps you think about SQL database changes.
+* Gives you a single command to run to update your database.
+* Per instance tracking of database state, so working with mutliple environments is straightforward.
+* Doesn't couple you too a single tool; the tool here simply automates execution and tracks state, running manually does not require magic.
 
-## The premise
+---
 
-Some SQL scripts can be written in a declaritive & idempotent manner that makes them safe to run multiple times. Some cannot however because they would cause data loss or poor database performace. This process relies on the developers knowing the difference and being able to write declaritive & idempotent sql scripts where possible.
+This process uses a tool called [Roundhouse](https://github.com/chucknorris/roundhouse). This tool does two things:
+* Automates execution of your SQL scripts
+* Tracks which scripts it has already ran for your database
 
-Using the folder convention defined by the tool, we will organize our scripts in a way that lets the tool know which scripts are safe to run and when.
+The tooling requires that you organize and write your SQL scripts in a certian manner based on when they can be executed. Conceptually, there are three categories:
+* One Time Scripts - Scripts that you only want to run once per database instance, such as DDL or DML.
+* Anytime Scripts - Scripts that can be run at anytime, such as scripts that create/alter functions, indexes, views and stored procedures.
+* Everytime Scripts - Scripts that can & should be run everytime, such as permissions.
 
-Based on that folder convention the tooling automates database creation and updates. The tool can track the state for us, and since the folder structure tells it which scripts are safe to run and when, it can minimze the amount of state it tracks and give us some safety in the event someone modifies a non-idempotent script by accident.
+By organizing your SQL this way Roundhouse can automate updating your database.
+* It knows that it should only run 'One Time' scripts once, so it tracks if it ran them yet for each instance and if not it runs them.
+* It knows that it can run 'Anytime' scripts whenever, so it runs them if they have changed since it's last run.
+* It knows that it should run 'Everytime' scripts everytime, so it just runs them.
 
-## The tool
+---
 
-In this example I am using a tool called [Roundhouse](https://github.com/chucknorris/roundhouse/wiki) which handles running the scripts and state tracking.
+## The folder structure
 
-## The folder convention
+As mentioned, Roundhouse requires organizing your SQL into specific groups, usually I place these folders in a SQL folder inside my project's repo.
 
-Roundhouse requires you organize your SQL scripts into folders based on when they can run.
+**One Time Scripts**
 
-| When| Folder | Types of scripts |
-| ---- | ------ | ----------- |
-| One Time | up     | Scripts you only want to run once, such as schema changes (DDL) or data manipulations (DML) |
-| Any Time | functions, views, sprocs, indexes | Scripts that can be run any time. Usually follows `CREATE IF NOT EXIST ... ALTER` pattern. |
-| Everytime | permissions | Scripts that shold be run every time.  |
+* Folder Name: `up`
+* Naming Convention: Whatever you want so long as they get sorted in desired run order.
+  * Eg: 0001-Initial.sql, 0002-NextChange.sql
 
-## Sample Scenario
+**Anytime Scripts**
 
-These instructions will walk you through initial database setup as well as making a change to that database. I have provided a sample solution (`Example.sln`) that contains a project and some initial sql scripts.
+* Folder names: `functions, indexes, sprocs, views`
+* Naming convention: Whatever you want.
 
-> **Note**: Scenario assumes you have a local Sql Server instance and that you have `sa` permission on that database.
+**Everytime Scripts**
 
-### Intro
+* Folder name: `permissions`
+* Naming convention: Whatever you want.
 
-Open `Example.sln`, and take a look at the `Database` folder. You will see three subfolders:
+For full folder list and conventions see the [Roundhouse documentation](https://github.com/chucknorris/roundhouse/wiki#scripts).
 
-* `Deployment` - Contains the roundhouse exe and powershell scripts for your CI/CD pipeline.
-* `SQL` - Contains the initial SQL for the example, organized into Roundhouse folder convention, and a file for versioning.
-* `SqlChangesForDemo` - Premade SQL changes I have provided that we will use to walk through making a change.
+---
 
-Take a look at the scripts in the `SQL` folder. These scripts setup a database that has two tables and some common sql objects such as views, stored procedures, functions, indexes and permissions.
+## Running Roundhouse
 
-You may notice some boilerplate sql in some sql files. This is used to make those scripts idempotent and thus we don't need to track if we ran them.
-
-### Inital database setup
-
-Run the `UpdateDatabase.ps1` script.
-
-You now should have a database called `MySqlCiCdExampleDatabase`. 
-
-Feel free to run `UpdateDatabase.ps1` again as many times as you like, if you followed the convention (which the example does), it is an idempotent command.
-
-### Dropping a column
-
-Dropping a column is a one-time only change, thus we are going to put it the `up` folder per Roundhouse convention.
-
-In the `SqlChangesForDemo` folder you will find `000000002_DeleteColumn.sql`. Move that file into the `SQL\up` folder.
-
-Run the `UpdateDatabase.ps1` which will run our new change.
-
-### Alter a stored procedure
-
-Since a change to a stored procedure can be run anytime we will just edit the `GetEventsDuringTimeframe.sql`.
-
-In that script add `SET NOCOUNT ON` about the `SELECT *`.
-
-Run the UpdateDatabase.ps1 which will re-run that script, applying our change.
-
-### Making a change to a one-time only script
-
-In the `000000001_Initial_Schema.sql` change the name of the `WhoopsThisIsntSupposedToBeHere` column to `ThisIsSupposedToBeHereNow`.
-
-Via powershell, `cd` to the `Deployment` folder and run the `UpdateDatabase.ps1`.
-You will notice it threw an error. This is because we changed a script that by convention should never change once it has already ran. Instead this change should be made via an `ALTER TABLE` command in a different one time script.
+`rh.exe /s={databaseServer} /d={databaseName} /vf={versionFile} /f={SqlFolder}`
